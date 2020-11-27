@@ -9,7 +9,7 @@
 
 
 # check command line params / options
-while getopts "han:b:r:l:i:p:v:d:f:c:R:s:z:x:gkK:t:u:" OPTION ; do
+while getopts "han:b:r:l:i:p:v:d:f:c:R:s:z:x:gkK:t:u:UL:" OPTION ; do
   case $OPTION in
 
     # help
@@ -61,6 +61,8 @@ while getopts "han:b:r:l:i:p:v:d:f:c:R:s:z:x:gkK:t:u:" OPTION ; do
       echo "  -K <path/url>         Install SSH-Keys from file/URL"
       echo '  -t <yes|no>           Take over rescue system SSH public keys'
       echo '  -u <yes|no>           Allow usb drives'
+      echo "  -U                    Use remote SSH unlocking for full disk encryption.  SSH keys must be specified in the config or with the '-K' flag for this feature to work."
+      echo '  -L <password>         Set the specified LUKS password for full disk encryption.'
       echo
       exit 0
     ;;
@@ -243,6 +245,17 @@ while getopts "han:b:r:l:i:p:v:d:f:c:R:s:z:x:gkK:t:u:" OPTION ; do
     u)
       [[ -z "$OPTARG" ]] || [[ "${OPTARG,,}" == 'yes' ]] && export ALLOW_USB_DRIVES='1'
     ;;
+
+    # Use remote SSH unlocking for full disk encryption.
+    U)
+     export FDE_SSH_UNLOCK="1"
+    ;;
+
+    # Specifies LUKS password for full disk encryption.
+    L)
+     export LUKS_PASSWORD=$OPTARG
+     export OPT_USE_LUKS_PASSWORD="1"
+    ;;
   esac
 done
 
@@ -256,6 +269,13 @@ fi
 
 if [ "$OPT_USE_SSHKEYS" -a -z "$OPT_SSHKEYS_URL" ]; then
   msg="=> FAILED: Should install SSH keys, but key URL not set."
+  debug "$msg"
+  echo -e "${RED}$msg${NOCOL}"
+  exit 1
+fi
+
+if [ "$OPT_USE_LUKS_PASSWORD" -a -z "$LUKS_PASSWORD" ]; then
+  msg="=> FAILED: LUKS passphrase not set for full disk encryption."
   debug "$msg"
   echo -e "${RED}$msg${NOCOL}"
   exit 1
@@ -276,5 +296,6 @@ fi
 [ "$OPT_USE_SSHKEYS" ]  && debug "# OPT_USE_SSHKEYS:  $OPT_USE_SSHKEYS"
 [ "$OPT_SSHKEYS_URL" ]  && debug "# OPT_SSHKEYS_URL:  $OPT_SSHKEYS_URL"
 [ "$OPT_TAKE_OVER_RESCUE_SYSTEM_SSH_PUBLIC_KEYS" ] && debug "# OPT_TAKE_OVER_RESCUE_SYSTEM_SSH_PUBLIC_KEYS: $OPT_TAKE_OVER_RESCUE_SYSTEM_SSH_PUBLIC_KEYS"
+[ "$OPT_USE_LUKS_PASSWORD" ]  && debug "# OPT_USE_LUKS_PASSWORD:  $OPT_USE_LUKS_PASSWORD"
 
 # vim: ai:ts=2:sw=2:et

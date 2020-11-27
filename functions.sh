@@ -329,6 +329,31 @@ create_config() {
     echo "HOSTNAME $DEFAULT_HOSTNAME" >> "$CNF"
     echo "" >> "$CNF"
 
+    # Full disk encryption & SSH Remote Unlocking
+    {
+      echo ""
+      echo "## ============================================="
+      echo "##  FULL DISK ENCRYPTION / SSH REMOTE UNLOCKING:"
+      echo "## ============================================="
+      echo ""
+      echo "## When a volume's file system is specified as 'luks+lvm', a LUKS password should be provided for full disk encryption."
+      echo "## When full disk encryption is active, it is highly recommended to also enable remote unlocking over SSH to allow the encrypted drive to be decrypted at boot time using the specified password."
+      echo "##"
+      echo ""
+    } >> "$CNF"
+
+    if [ "$OPT_USE_LUKS_PASSWORD" == "1" ]; then
+      echo "LUKS_PASSWORD $LUKS_PASSWORD" >> "$CNF"
+    else
+      echo "#LUKS_PASSWORD <password>" >> "$CNF"
+    fi
+
+    if [ "$FDE_SSH_UNLOCK" == "1" ]; then
+      echo "FDE_SSH_UNLOCK $FDE_SSH_UNLOCK" >> "$CNF" >> "$CNF"
+    else
+      echo "#FDE_SSH_UNLOCK 1" >> "$CNF" >> "$CNF"
+    fi
+
     ## Calculate how much hardisk space at raid level 0,1,5,6,10
     RAID0=0
     local small_hdd; small_hdd="$(smallest_hd)"
@@ -589,11 +614,9 @@ if [ -n "$1" ]; then
   FORCE_PASSWORD="$(grep -m1 -e ^FORCE_PASSWORD "$1" |awk '{print $2}')"
   export FORCE_PASSWORD
 
-  LUKS_PASSWORD="$(grep -m1 -e ^LUKS_PASSWORD "$1" |awk '{print $2}')"
-  export LUKS_PASSWORD
-
-  FDE_SSH_UNLOCK="$(grep -m1 -e ^FDE_SSH_UNLOCK "$1" |awk '{print $2}')"
-  export FDE_SSH_UNLOCK
+  # options for full disk encryption and SSH remote unlocking
+  [[ -z "$LUKS_PASSWORD" ]] && export LUKS_PASSWORD="$(grep -m1 -e ^LUKS_PASSWORD "$1" |awk '{print $2}')"
+  [[ -z "$FDE_SSH_UNLOCK" ]] && export FDE_SSH_UNLOCK="$(grep -m1 -e ^FDE_SSH_UNLOCK "$1" |awk '{print $2}')"
 
   # another configure option: allow usb drives
   # if set to 1: allow usb drives
