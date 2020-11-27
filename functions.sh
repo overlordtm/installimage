@@ -3974,13 +3974,13 @@ debian_install_initramfs_dropbear() {
   # install ssh keys for dropbear
   mkdir -p "$FOLD/hdd/etc/dropbear-initramfs/" || return 1
   cat "$FOLD/authorized_keys" >> "$FOLD/hdd/etc/dropbear-initramfs/authorized_keys" || return 1
-  
+
   # install initramfs routes fix
   curl --silent --output "$FOLD/hdd/etc/initramfs-tools/scripts/init-premount/zz-hetzner-fix-routes" "https://gist.githubusercontent.com/overlordtm/b4ea42af162df528be60c0fb1193415f/raw/979772a17a694d9f9e9455b662b6b11a73bbc855/zz-hetzner-fix-routes" || return 1
   chmod +x "$FOLD/hdd/etc/initramfs-tools/scripts/init-premount/zz-hetzner-fix-routes" || return 1
   # install dropbear-initramfs
-  execute_command "apt-get --assume-yes install dropbear-initramfs cryptsetup-initramfs" || return 1
-  
+  execute_command "apt-get --assume-yes install dropbear-initramfs cryptsetup" || return 1
+
   # configure dropbear
   sed -i '/^#DROPBEAR_OPTIONS=/a DROPBEAR_OPTIONS="-s -j -k -I 60 -p 54321"' "$FOLD/hdd/etc/dropbear-initramfs/config" || return 1
 }
